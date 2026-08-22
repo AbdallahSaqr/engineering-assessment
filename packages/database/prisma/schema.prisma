@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id           String            @id
+  name         String
+  email        String            @unique
+  phone        String
+  applications LoanApplication[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model LoanApplication {
+  id                     String                    @id
+  customerId             String
+  customer               Customer                 @relation(fields: [customerId], references: [id])
+  status                 String
+  requestedAmountCents   Int
+  currency               String                    @default("EGP")
+  lastEventOccurredAt    DateTime?
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  history                ApplicationStatusHistory[]
+  notificationJobs       NotificationJob[]
+
+  @@index([customerId])
+}
+
+model ApplicationStatusHistory {
+  id             String          @id
+  applicationId  String
+  application    LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  status         String
+  reason         String?
+  sourceEventId  String?
+  occurredAt     DateTime
+  recordedAt     DateTime        @default(now())
+
+  @@index([applicationId, occurredAt])
+  @@index([sourceEventId])
+}
+
+model NotificationJob {
+  id              String          @id
+  applicationId   String
+  application     LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  sourceEventId   String
+  type            String
+  payload         String
+  attemptCount    Int             @default(0)
+  nextAttemptAt   DateTime?
+  processedAt     DateTime?
+  lastError       String?
+  createdAt       DateTime        @default(now())
+
+  @@index([processedAt, nextAttemptAt])
+  @@index([sourceEventId])
+}

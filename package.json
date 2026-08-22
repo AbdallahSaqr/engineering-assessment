@@ -1,0 +1,39 @@
+{
+  "name": "engineering-assessment",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Artificial loan application system for MNZL engineering assessment.",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22 <23",
+    "pnpm": ">=9 <10"
+  },
+  "scripts": {
+    "setup": "pnpm install --frozen-lockfile=false && pnpm db:generate && pnpm db:reset",
+    "dev": "cross-env DATABASE_URL=file:./dev.db concurrently --kill-others --names api,web,worker --prefix-colors yellow,green,magenta \"pnpm --filter @assessment/api dev\" \"pnpm --filter @assessment/web dev\" \"pnpm --filter @assessment/worker dev\"",
+    "build": "pnpm --filter @assessment/web build",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "lint": "eslint .",
+    "typecheck": "pnpm --recursive --if-present typecheck",
+    "test": "pnpm db:test:reset && cross-env DATABASE_URL=file:./test.db vitest run --no-file-parallelism",
+    "test:watch": "cross-env DATABASE_URL=file:./test.db vitest",
+    "db:generate": "cross-env DATABASE_URL=file:./dev.db prisma generate --schema packages/database/prisma/schema.prisma",
+    "db:reset": "node -e \"require('node:fs').closeSync(require('node:fs').openSync('packages/database/prisma/dev.db', 'a'))\" && cross-env DATABASE_URL=file:./dev.db prisma db push --schema packages/database/prisma/schema.prisma --accept-data-loss && cross-env DATABASE_URL=file:./dev.db tsx packages/database/prisma/seed.ts",
+    "db:test:reset": "node -e \"require('node:fs').closeSync(require('node:fs').openSync('packages/database/prisma/test.db', 'a'))\" && cross-env DATABASE_URL=file:./test.db prisma db push --schema packages/database/prisma/schema.prisma --accept-data-loss --skip-generate",
+    "db:studio": "cross-env DATABASE_URL=file:./dev.db prisma studio --schema packages/database/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^15.5.3",
+    "@prisma/client": "^6.16.2",
+    "@types/node": "^22.18.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^10.0.1",
+    "prisma": "^6.16.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
+    "vitest": "^3.2.4"
+  }
+}
