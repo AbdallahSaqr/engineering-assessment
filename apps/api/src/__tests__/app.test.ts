@@ -68,7 +68,12 @@ describe("application API", () => {
       },
     });
 
-    expect(response.statusCode).toBe(202);
+    // 200, not the original 202: the work is committed before the response is
+    // written, so 202 ("still pending") misdescribed it. The `outcome` field is
+    // now the discriminator between an acceptance and a duplicate.
+    // See DECISIONS.md D6 -- this is a breaking change to the partner contract.
+    expect(response.statusCode).toBe(200);
+    expect(response.json().outcome).toBe("ACCEPTED");
     expect(response.json().application.status).toBe("IN_REVIEW");
     await expect(
       prisma.applicationStatusHistory.count({

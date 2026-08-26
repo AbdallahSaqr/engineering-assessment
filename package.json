@@ -20,7 +20,8 @@
     "db:generate": "cross-env DATABASE_URL=file:./dev.db prisma generate --schema packages/database/prisma/schema.prisma",
     "db:reset": "node -e \"require('node:fs').closeSync(require('node:fs').openSync('packages/database/prisma/dev.db', 'a'))\" && cross-env DATABASE_URL=file:./dev.db prisma db push --schema packages/database/prisma/schema.prisma --accept-data-loss && cross-env DATABASE_URL=file:./dev.db tsx packages/database/prisma/seed.ts",
     "db:test:reset": "node -e \"require('node:fs').closeSync(require('node:fs').openSync('packages/database/prisma/test.db', 'a'))\" && cross-env DATABASE_URL=file:./test.db prisma db push --schema packages/database/prisma/schema.prisma --accept-data-loss --skip-generate",
-    "db:studio": "cross-env DATABASE_URL=file:./dev.db prisma studio --schema packages/database/prisma/schema.prisma"
+    "db:studio": "cross-env DATABASE_URL=file:./dev.db prisma studio --schema packages/database/prisma/schema.prisma",
+    "dead-letters": "cross-env DATABASE_URL=file:./dev.db tsx apps/worker/src/dead-letter-cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

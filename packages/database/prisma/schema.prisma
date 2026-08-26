@@ -45,7 +45,13 @@ model ApplicationStatusHistory {
   occurredAt     DateTime
   recordedAt     DateTime        @default(now())
 
+  // Idempotency: one accepted partner event has exactly one effect on history.
+  // Scoped to the application rather than global so that a partner reusing an
+  // identifier across applications cannot suppress a legitimate event (DECISIONS.md D5).
+  @@unique([applicationId, sourceEventId])
   @@index([applicationId, occurredAt])
+  // Retained: the unique index above cannot serve a lookup by sourceEventId
+  // alone, because it is not the leftmost column.
   @@index([sourceEventId])
 }
 
@@ -56,12 +62,20 @@ model NotificationJob {
   sourceEventId   String
   type            String
   payload         String
+  // Terminal state is a stored fact, not a value recomputed from the current
+  // retry policy: raising the attempt limit must not resurrect dead jobs
+  // (DECISIONS.md D10). One of PENDING, DELIVERED, DEAD_LETTERED.
+  status          String          @default("PENDING")
   attemptCount    Int             @default(0)
   nextAttemptAt   DateTime?
   processedAt     DateTime?
   lastError       String?
   createdAt       DateTime        @default(now())
 
-  @@index([processedAt, nextAttemptAt])
+  // Idempotency: one accepted partner event requests at most one notification
+  // of each type. Including `type` leaves room for an event to produce more than
+  // one kind of notification later (DECISIONS.md D5).
+  @@unique([applicationId, sourceEventId, type])
+  @@index([status, nextAttemptAt])
   @@index([sourceEventId])
 }
